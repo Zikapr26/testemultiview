@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>MultiWatch - Zika Edition</title>
+    <style>
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* BARRA PRINCIPAL COMO CONTAINER INVISÍVEL */
+        #toolbar { 
+            position: fixed; top: 0; left: 0; right: 0; 
+            display: flex; justify-content: space-between; 
+            z-index: 1000; pointer-events: none; height: 45px;
+        }
+        
+        /* ILHA VERMELHA (CONTROLES) */
+        #menu-to-hide { 
+            background: #111; padding: 8px 15px; display: flex; gap: 10px; align-items: center; 
+            border: 1px solid #333; border-top: none; pointer-events: auto;
+            transition: transform 0.3s ease;
+        }
+        /* Efeito de subir a ilha */
+        .menu-hidden #menu-to-hide { transform: translateY(-100%); }
+
+        /* ILHA AZUL (CHAT - SEMPRE VISÍVEL) */
+        #menu-persistent { 
+            background: #111; padding: 8px 15px; display: flex; gap: 10px; align-items: center; 
+            border: 1px solid #333; border-top: none; pointer-events: auto;
+        }
+
+        /* ESTILOS ORIGINAIS DOS INPUTS */
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 6px 25px 6px 10px; border-radius: 4px; width: 100px; font-size: 11px; outline: none; }
+        .clear-btn { position: absolute; right: 5px; cursor: pointer; color: #555; font-size: 14px; font-weight: bold; border: none; background: none; }
+        button { background: #222; color: #eee; border: 1px solid #333; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
+        button:hover { background: #333; }
+        .btn-primary { background: #ff0000; border: none; }
+        .active-chat { border-color: #ff0000 !important; color: #ff0000 !important; }
+        .group { display: flex; align-items: center; gap: 6px; border-left: 1px solid #333; padding-left: 10px; height: 24px; color: #666; font-size: 10px; }
+        
+        /* CONTEÚDO (LIVES) - SOBE E DESCE COM O MENU */
+        #main-container { 
+            display: flex; flex: 1; width: 100%; overflow: hidden; background: #000; 
+            margin-top: 45px; transition: margin-top 0.3s ease;
+        }
+        .menu-hidden #main-container { margin-top: 0; }
+        
+        #content-area { display: flex; flex-direction: column; flex: 1; position: relative; }
+        .video-box { position: relative; background: #000; overflow: hidden; display: flex; flex: 1; }
+        iframe { width: 100%; height: 100%; border: none; background: #000; display: block; }
+
+        .gutter { background: #000; z-index: 10; transition: background 0.2s; flex-shrink: 0; }
+        .gutter:hover { background: #ff0000 !important; }
+        .gutter-h { cursor: col-resize; width: 4px; }
+        .gutter-v { cursor: row-resize; height: 4px; width: 100%; }
+
+        #chat-area { width: 320px; background: #000; display: flex; flex-direction: column; border-left: 1px solid #222; }
+        .chat-container { flex: 1; width: 100%; height: 100%; display: none; background: #000; }
+        .chat-active { display: block !important; }
+        .hide { display: none !important; }
+        #menu-trigger { position: fixed; top: 0; left: 0; width: 70%; height: 12px; z-index: 1001; cursor: pointer; }
+    </style>
+</head>
+<body class="menu-hidden">
+
+    <div id="menu-trigger" onmouseover="showMenu()"></div>
+
+    <div id="toolbar">
+        <div id="menu-to-hide">
+            <div class="input-wrapper"><input type="text" id="in1" placeholder="L1"><button class="clear-btn" onclick="apagarSlot(1)">×</button></div>
+            <div class="input-wrapper"><input type="text" id="in2" placeholder="L2"><button class="clear-btn" onclick="apagarSlot(2)">×</button></div>
+            <div class="input-wrapper"><input type="text" id="in3" placeholder="L3"><button class="clear-btn" onclick="apagarSlot(3)">×</button></div>
+            <div class="input-wrapper"><input type="text" id="in4" placeholder="L4"><button class="clear-btn" onclick="apagarSlot(4)">×</button></div>
+            <button class="btn-primary" onclick="carregar()">CARREGAR</button>
+            <button onclick="salvar()">SALVAR</button>
+            <button onclick="limparTudo()" style="color: #ff5555;">LIMPAR</button>
+            <div class="group">
+                <button onclick="mudarLayout('grade')">4T</button>
+                <button onclick="mudarLayout('lado')">H</button>
+                <button onclick="mudarLayout('pilha')">V</button>
+            </div>
+            <button onclick="toggleMenu()" style="background: #333; margin-left: 5px;">MENU</button>
+        </div>
+
+        <div id="menu-persistent">
+            <button onclick="toggleChat()">CHAT</button>
+            <div class="group">
+                <span>CHATS:</span>
+                <button onclick="swapChat(1)" id="c1">1</button>
+                <button onclick="swapChat(2)" id="c2">2</button>
+                <button onclick="swapChat(3)" id="c3">3</button>
+                <button onclick="swapChat(4)" id="c4">4</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="content-area">
+            <div id="top-row" style="height: 50%; display: flex;">
+                <div id="b1" class="video-box"><iframe id="v1" allowfullscreen></iframe></div>
+                <div id="gH1" class="gutter gutter-h" onmousedown="initResizeH(event)"></div>
+                <div id="b2" class="video-box"><iframe id="v2" allowfullscreen></iframe></div>
+            </div>
+            <div id="gV" class="gutter gutter-v" onmousedown="initResizeV(event)"></div>
+            <div id="bottom-row" style="height: 50%; display: flex;">
+                <div id="b3" class="video-box"><iframe id="v3" allowfullscreen></iframe></div>
+                <div id="gH2" class="gutter gutter-h" onmousedown="initResizeH(event)"></div>
+                <div id="b4" class="video-box"><iframe id="v4" allowfullscreen></iframe></div>
+            </div>
+        </div>
+        <div id="chat-area" class="hide">
+            <div id="chat-c1" class="chat-container"><iframe id="f1" style="width:100%;height:100%;"></iframe></div>
+            <div id="chat-c2" class="chat-container"><iframe id="f2" style="width:100%;height:100%;"></iframe></div>
+            <div id="chat-c3" class="chat-container"><iframe id="f3" style="width:100%;height:100%;"></iframe></div>
+            <div id="chat-c4" class="chat-container"><iframe id="f4" style="width:100%;height:100%;"></iframe></div>
+        </div>
+    </div>
+
+    <script>
+        /* MANTIDO EXATAMENTE SEU CÓDIGO ORIGINAL ABAIXO */
+        let ids = ["", "", "", ""];
+        let platforms = ["", "", "", ""];
+        const domain = window.location.hostname || "localhost";
+
+        window.onload = function() {
+            for(let i=1; i<=4; i++) {
+                const val = localStorage.getItem('l'+i);
+                if(val) document.getElementById('in'+i).value = val;
+            }
+            carregar();
+        };
+
+        function getStreamData(url) {
+            if (!url) return null;
+            if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+                const m = url.match(reg);
+                return (m && m[1]) ? { id: m[1], platform: 'youtube' } : null;
+            }
+            if (url.includes("twitch.tv")) {
+                const parts = url.split('/');
+                const id = parts[parts.length - 1] || parts[parts.length - 2];
+                return { id: id.split('?')[0], platform: 'twitch' };
+            }
+            if (url.includes("kick.com")) {
+                const parts = url.split('/');
+                const id = parts[parts.length - 1] || parts[parts.length - 2];
+                return { id: id.split('?')[0], platform: 'kick' };
+            }
+            return null;
+        }
+
+        function carregar() {
+            let ativos = 0;
+            for(let i=1; i<=4; i++) {
+                const val = document.getElementById('in'+i).value;
+                const data = getStreamData(val);
+                const box = document.getElementById('b'+i);
+                if(data) {
+                    ativos++;
+                    ids[i-1] = data.id;
+                    platforms[i-1] = data.platform;
+                    box.classList.remove('hide');
+                    let videoSrc = (data.platform === 'youtube') ? `https://www.youtube.com/embed/${data.id}?autoplay=1&mute=1&rel=0` :
+                                   (data.platform === 'twitch') ? `https://player.twitch.tv/?channel=${data.id}&parent=${domain}&autoplay=true&muted=true` :
+                                   `https://player.kick.com/${data.id}`;
+                    let chatSrc = (data.platform === 'youtube') ? `https://www.youtube.com/live_chat?v=${data.id}&embed_domain=${domain}&dark_theme=1` :
+                                  (data.platform === 'twitch') ? `https://www.twitch.tv/embed/${data.id}/chat?parent=${domain}&darkpopout` :
+                                  `https://kick.com/popout/${data.id}/chat`;
+                    document.getElementById('v'+i).src = videoSrc;
+                    const frame = document.getElementById('f'+i);
+                    if(frame.src !== chatSrc) frame.src = chatSrc;
+                } else {
+                    ids[i-1] = ""; platforms[i-1] = "";
+                    document.getElementById('v'+i).src = "";
+                    document.getElementById('f'+i).src = "";
+                    box.classList.add('hide');
+                }
+            }
+            autoLayout(ativos);
+        }
+
+        function autoLayout(qtd) {
+            const rowB = document.getElementById('bottom-row'), gV = document.getElementById('gV'), 
+                  gH1 = document.getElementById('gH1'), gH2 = document.getElementById('gH2'), 
+                  topR = document.getElementById('top-row'), b1=document.getElementById('b1'), b2=document.getElementById('b2');
+            [rowB, gV, gH1, gH2].forEach(el => el.classList.remove('hide'));
+            topR.style.display = "flex"; topR.style.flexDirection = "row"; topR.style.height = "50%"; b1.style.flex = "1"; b2.style.flex = "1";
+            if (qtd <= 2) {
+                rowB.classList.add('hide'); gV.classList.add('hide'); topR.style.height = "100%";
+                if (qtd === 1) gH1.classList.add('hide');
+            } else if (qtd === 3 && !ids[3]) { gH2.classList.add('hide'); }
+        }
+
+        function swapChat(n) {
+            document.querySelectorAll('.group button').forEach(b => b.classList.remove('active-chat'));
+            document.querySelectorAll('.chat-container').forEach(c => c.classList.remove('chat-active'));
+            if(ids[n-1]) {
+                document.getElementById('chat-c' + n).classList.add('chat-active');
+                document.getElementById('c' + n).classList.add('active-chat');
+                if(document.getElementById('chat-area').classList.contains('hide')) toggleChat();
+            }
+        }
+
+        function apagarSlot(n) { document.getElementById('in' + n).value = ""; carregar(); localStorage.removeItem('l' + n); }
+        function limparTudo() { if(confirm("Limpar tudo?")) { for(let i=1; i<=4; i++) document.getElementById('in'+i).value = ""; carregar(); localStorage.clear(); } }
+        function salvar() { for(let i=1; i<=4; i++) localStorage.setItem('l'+i, document.getElementById('in'+i).value); alert("Salvo!"); }
+
+        function mudarLayout(modo) {
+            const b1=document.getElementById('b1'), b2=document.getElementById('b2'), rowB=document.getElementById('bottom-row'), gV=document.getElementById('gV'), gH1=document.getElementById('gH1'), topR=document.getElementById('top-row');
+            [b1, b2, rowB, gV, gH1].forEach(el => el.classList.remove('hide'));
+            topR.style.display = "flex"; topR.style.flexDirection = "row"; topR.style.height = "50%";
+            if(modo === 'lado') { rowB.classList.add('hide'); gV.classList.add('hide'); topR.style.height = "100%"; } 
+            else if(modo === 'pilha') { rowB.classList.add('hide'); gV.classList.add('hide'); gH1.classList.add('hide'); topR.style.flexDirection = "column"; topR.style.height = "100%"; }
+        }
+
+        function initResizeH(e) { document.body.classList.add('resizing'); window.addEventListener('mousemove', resH); window.addEventListener('mouseup', stp); }
+        function resH(e) { 
+            let chatW = document.getElementById('chat-area').classList.contains('hide') ? 0 : 320; 
+            let v = (e.clientX / (window.innerWidth - chatW)) * 100; 
+            document.getElementById('b1').style.flex = `0 0 ${v}%`; document.getElementById('b3').style.flex = `0 0 ${v}%`; 
+        }
+
+        function initResizeV(e) { document.body.classList.add('resizing'); window.addEventListener('mousemove', resV); window.addEventListener('mouseup', stp); }
+        function resV(e) { let v = (e.clientY / window.innerHeight) * 100; document.getElementById('top-row').style.height = v + "%"; }
+        function stp() { document.body.classList.remove('resizing'); window.removeEventListener('mousemove', resH); window.removeEventListener('mousemove', resV); }
+
+        function toggleMenu() { document.body.classList.toggle('menu-hidden'); }
+        function showMenu() { document.body.classList.remove('menu-hidden'); }
+        function hideMenu() { document.body.classList.add('menu-hidden'); }
+        function toggleChat() { document.getElementById('chat-area').classList.toggle('hide'); }
+    </script>
+</body>
+</html>
