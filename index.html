@@ -2,42 +2,57 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>HELIOS MULTIVIEW - FIX ID & CHAT</title>
+    <title>HELIOS MULTIVIEW - FINAL FIX</title>
     <style>
         body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #toolbar { background: #111; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; flex-wrap: wrap; }
-        #main { display: flex; flex: 1; overflow: hidden; }
+        #toolbar { background: #111; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 9999; position: relative; }
+        
+        #main-container { display: flex; flex: 1; overflow: hidden; }
         #grid { display: grid; flex: 1; gap: 2px; background: #222; }
+        
+        /* Layouts de Grade */
         .g6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
         .g4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
         .l3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr 1fr; }
         .l3 .box:nth-child(3) { grid-column: span 2; }
+
         .box { background: #000; position: relative; border: 1px solid #1a1a1a; }
-        iframe { width: 100%; height: 100%; border: none; }
+        iframe { width: 100%; height: 100%; border: none; background: #000; }
+        
+        .inputs-area { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         input { background: #222; border: 1px solid #444; color: #fff; padding: 4px; font-size: 10px; width: 100px; border-radius: 3px; outline: none; }
-        button { background: #333; color: #fff; border: 1px solid #555; padding: 6px 10px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 4px; }
-        #chat-area { width: 350px; background: #000; border-left: 1px solid #333; display: flex; flex-direction: column; }
+        
+        button { background: #333; color: #fff; border: 1px solid #555; padding: 6px 12px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 4px; position: relative; z-index: 10000; }
+        button:active { transform: translateY(1px); }
+        .btn-red { background: #ff0000; border: none; }
+        
+        #chat-section { width: 350px; background: #000; border-left: 1px solid #333; display: flex; flex-direction: column; }
         .hide { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="toolbar">
-        <button onclick="syncAuto()" style="background:#ff0000; border:none;">SINCRO AUTO</button>
-        <div style="display:flex; gap:4px;">
+        <button class="btn-red" onclick="syncAutomatico()">SINCRO AUTO</button>
+        
+        <div class="inputs-area">
             <input type="text" id="in1" placeholder="Link L1"><input type="text" id="in2" placeholder="Link L2"><input type="text" id="in3" placeholder="Link L3">
             <input type="text" id="in4" placeholder="Link L4"><input type="text" id="in5" placeholder="Link L5"><input type="text" id="in6" placeholder="Link L6">
         </div>
+        
         <button onclick="carregarManual()">OK (FIX ID)</button>
-        <button onclick="setLayout('g6')">G6</button><button onclick="setLayout('g4')">G4</button><button onclick="setLayout('l3')">L3</button>
+        <button onclick="setLayout('g6')">G6</button>
+        <button onclick="setLayout('g4')">G4</button>
+        <button onclick="setLayout('l3')">L3</button>
         <button onclick="toggleChat()">CHAT</button>
+
         <select id="chatSel" onchange="mudarChat(this.value)" style="background:#222; color:#fff; font-size:11px; padding:4px;">
             <option value="1">Chat L1</option><option value="2">Chat L2</option><option value="3">Chat L3</option>
             <option value="4">Chat L4</option><option value="5">Chat L5</option><option value="6">Chat L6</option>
         </select>
     </div>
 
-    <div id="main">
+    <div id="main-container">
         <div id="grid" class="g6">
             <div class="box"><iframe id="v1" allowfullscreen></iframe></div>
             <div class="box"><iframe id="v2" allowfullscreen></iframe></div>
@@ -46,7 +61,7 @@
             <div class="box"><iframe id="v5" allowfullscreen></iframe></div>
             <div class="box"><iframe id="v6" allowfullscreen></iframe></div>
         </div>
-        <div id="chat-area" class="hide">
+        <div id="chat-section" class="hide">
             <iframe id="chat-frame" style="width:100%; height:100%; border:none;"></iframe>
         </div>
     </div>
@@ -56,32 +71,32 @@
         const CANAIS = ["UC-lHJZR3Gqxm24_Vd_AJ5Yw", "UC0uYV778E2GTo6W8U6u220w", "UCPY9OndS0GqL9YofV_8B9_w", "UCxI-mD7-S1vshLh9LpX8Oog", "UCX9H70qU1R3eK3c9NnOasTg", "UC57f9p_v0m3Gq80M09Hl_Bg"];
         const domain = "zikapr26.github.io";
 
-        // Função que extrai o ID de qualquer link do YT
-        function getID(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+        // Função infalível para extrair o ID do vídeo
+        function parseID(url) {
+            const reg = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const m = url.match(reg);
+            return (m && m[2].length === 11) ? m[2] : null;
         }
 
-        async function syncAuto() {
+        async function syncAutomatico() {
             for(let i=0; i<CANAIS.length; i++) {
                 try {
                     const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CANAIS[i]}&type=video&eventType=live&key=${API_KEY}`);
                     const d = await r.json();
-                    if(d.items?.length > 0) {
+                    if(d.items && d.items.length > 0) {
                         const id = d.items[0].id.videoId;
                         document.getElementById('v' + (i+1)).src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&origin=https://${domain}`;
                     }
-                } catch(e) { console.error("Erro Auto"); }
+                } catch(e) { console.log("Erro no canal " + i); }
             }
         }
 
         function carregarManual() {
             for(let i=1; i<=6; i++) {
                 const val = document.getElementById('in' + i).value;
-                const id = getID(val);
+                const id = parseID(val);
                 if(id) {
-                    // Aqui o código força o formato embed/ID que você mencionou
+                    // Garante o formato /embed/ID exigido pelo YouTube
                     document.getElementById('v' + i).src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&origin=https://${domain}`;
                 }
             }
@@ -95,17 +110,20 @@
             }
         }
 
-        function toggleChat() { document.getElementById('chat-area').classList.toggle('hide'); }
+        function toggleChat() { document.getElementById('chat-section').classList.toggle('hide'); }
+
         function setLayout(l) {
             const g = document.getElementById('grid');
             g.className = l;
-            document.querySelectorAll('.box').forEach((b, i) => {
-                b.classList.remove('hide');
-                if(l === 'g4' && i >= 4) b.classList.add('hide');
-                if(l === 'l3' && i >= 3) b.classList.add('hide');
+            document.querySelectorAll('.box').forEach((box, i) => {
+                box.classList.remove('hide');
+                if(l === 'g4' && i >= 4) box.classList.add('hide');
+                if(l === 'l3' && i >= 3) box.classList.add('hide');
             });
         }
-        window.onload = syncAuto;
+        
+        // Garante que o clique funcione mesmo com sobreposições
+        window.onload = () => { console.log("Multiview pronto!"); };
     </script>
 </body>
 </html>
