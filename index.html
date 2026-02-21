@@ -2,60 +2,59 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>HELIOS MONITOR - PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIOS MULTIVIEW - V.FINAL</title>
     <style>
-        body { margin: 0; font-family: sans-serif; background: #000; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #toolbar { background: #111; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; }
-        
-        #main { display: flex; flex: 1; overflow: hidden; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #toolbar { background: #111; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #333; z-index: 100; flex-wrap: wrap; }
+        #main-content { display: flex; flex: 1; overflow: hidden; }
         #grid { display: grid; flex: 1; gap: 2px; background: #222; }
         
-        /* Layouts Estilo Expedição */
+        /* Layouts Dinâmicos baseados na Expedição */
         .g6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
         .g4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
         .l3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr 1fr; }
         .l3 .box:nth-child(3) { grid-column: span 2; }
 
-        .box { background: #000; position: relative; }
-        .box iframe { width: 100%; height: 100%; border: none; }
+        .box { background: #000; position: relative; border: 1px solid #1a1a1a; }
+        iframe { width: 100%; height: 100%; border: none; background: #000; }
         
-        .inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        input { background: #222; border: 1px solid #444; color: #fff; padding: 4px; font-size: 10px; width: 110px; border-radius: 3px; outline: none; }
+        input { background: #222; border: 1px solid #444; color: #fff; padding: 4px; font-size: 10px; width: 95px; border-radius: 3px; outline: none; }
+        button { background: #333; color: #fff; border: 1px solid #555; padding: 6px 10px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 4px; }
+        .btn-sync { background: #ff0000; border: none; }
         
-        button { background: #333; color: #fff; border: 1px solid #555; padding: 6px 10px; cursor: pointer; font-size: 11px; border-radius: 4px; font-weight: bold; }
-        .btn-live { background: #ff0000; border: none; }
-        
-        #chat-area { width: 350px; background: #000; border-left: 1px solid #333; display: flex; flex-direction: column; }
+        #chat-area { width: 320px; background: #000; border-left: 1px solid #333; display: flex; flex-direction: column; }
         .hide { display: none !important; }
+        .label { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 5px; font-size: 9px; border-radius: 3px; z-index: 10; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="toolbar">
-        <button class="btn-live" onclick="syncAuto()">SINCRO AUTO</button>
-        <div class="inputs">
-            <input type="text" id="in1" placeholder="L1 (ID ou Link)"><input type="text" id="in2" placeholder="L2"><input type="text" id="in3" placeholder="L3">
-            <input type="text" id="in4" placeholder="L4"><input type="text" id="in5" placeholder="L5"><input type="text" id="in6" placeholder="L6">
+        <button class="btn-sync" onclick="forceSync()">FORÇAR LIVES AGORA</button>
+        <div style="display:flex; gap:4px;">
+            <input type="text" id="in1" placeholder="Slot 1"><input type="text" id="in2" placeholder="Slot 2"><input type="text" id="in3" placeholder="Slot 3">
+            <input type="text" id="in4" placeholder="Slot 4"><input type="text" id="in5" placeholder="Slot 5"><input type="text" id="in6" placeholder="Slot 6">
         </div>
         <button onclick="carregarManual()">OK</button>
         <button onclick="setLayout('g6')">G6</button>
         <button onclick="setLayout('g4')">G4</button>
         <button onclick="setLayout('l3')">L3</button>
         <button onclick="toggleChat()">CHAT</button>
-        <select id="chatSel" onchange="mudarChat(this.value)" style="background:#222; color:#fff; font-size:11px; padding:4px;">
-            <option value="1">Chat L1</option><option value="2">Chat L2</option><option value="3">Chat L3</option>
-            <option value="4">Chat L4</option><option value="5">Chat L5</option><option value="6">Chat L6</option>
+        <select id="chatSel" onchange="mudarChat(this.value)" style="background:#222; color:#fff; font-size:11px;">
+            <option value="1">Chat Slot 1</option><option value="2">Chat Slot 2</option><option value="3">Chat Slot 3</option>
+            <option value="4">Chat Slot 4</option><option value="5">Chat Slot 5</option><option value="6">Chat Slot 6</option>
         </select>
     </div>
 
-    <div id="main">
+    <div id="main-content">
         <div id="grid" class="g6">
-            <div class="box"><iframe id="v1" allowfullscreen></iframe></div>
-            <div class="box"><iframe id="v2" allowfullscreen></iframe></div>
-            <div class="box"><iframe id="v3" allowfullscreen></iframe></div>
-            <div class="box"><iframe id="v4" allowfullscreen></iframe></div>
-            <div class="box"><iframe id="v5" allowfullscreen></iframe></div>
-            <div class="box"><iframe id="v6" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">RICHARD</div><iframe id="v1" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">RATO B.</div><iframe id="v2" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">CARIANI</div><iframe id="v3" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">ACF</div><iframe id="v4" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">TONIMEK</div><iframe id="v5" allowfullscreen></iframe></div>
+            <div class="box"><div class="label">GORDOX</div><iframe id="v6" allowfullscreen></iframe></div>
         </div>
         <div id="chat-area" class="hide">
             <iframe id="chat-frame" style="width:100%; height:100%; border:none;"></iframe>
@@ -63,29 +62,30 @@
     </div>
 
     <script>
-        const API_KEY = "AIzaSyCQq0x3oD1kOWt2ZNgIhD-Y75nxIK3Z2gI";
-        const IDS_CANAIS = ["UC-lHJZR3Gqxm24_Vd_AJ5Yw", "UC0uYV778E2GTo6W8U6u220w", "UCPY9OndS0GqL9YofV_8B9_w", "UCxI-mD7-S1vshLh9LpX8Oog", "UCX9H70qU1R3eK3c9NnOasTg", "UC57f9p_v0m3Gq80M09Hl_Bg"];
-        const domain = "zikapr26.github.io"; // O domínio que o YouTube precisa validar
+        const CANAIS = [
+            "UC-lHJZR3Gqxm24_Vd_AJ5Yw", // Richard
+            "UC0uYV778E2GTo6W8U6u220w", // Rato B.
+            "UCPY9OndS0GqL9YofV_8B9_w", // Cariani
+            "UCxI-mD7-S1vshLh9LpX8Oog", // ACF
+            "UCX9H70qU1R3eK3c9NnOasTg", // Tonimek
+            "UC57f9p_v0m3Gq80M09Hl_Bg"  // Gordox
+        ];
+        const domain = "zikapr26.github.io";
 
-        async function syncAuto() {
-            for(let i=0; i<IDS_CANAIS.length; i++) {
-                const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${IDS_CANAIS[i]}&type=video&eventType=live&key=${API_KEY}`);
-                const data = await res.json();
-                const frame = document.getElementById('v' + (i+1));
-                if(data.items?.length > 0) {
-                    const vid = data.items[0].id.videoId;
-                    frame.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&origin=https://${domain}`;
-                } else {
-                    // Tenta forçar live caso a busca falhe
-                    frame.src = `https://www.youtube.com/embed/live_stream?channel=${IDS_CANAIS[i]}&autoplay=1&mute=1&origin=https://${domain}`;
-                }
+        // Método de Sintonização Direta (Sem depender de API de busca)
+        function forceSync() {
+            for(let i=0; i<CANAIS.length; i++) {
+                const num = i + 1;
+                // O YouTube redireciona este link automaticamente para a live ativa do canal
+                document.getElementById('v' + num).src = `https://www.youtube.com/embed/live_stream?channel=${CANAIS[i]}&autoplay=1&mute=1&origin=https://${domain}`;
             }
+            alert("Tentando sintonizar os 6 canais...");
         }
 
         function carregarManual() {
             for(let i=1; i<=6; i++) {
                 const val = document.getElementById('in' + i).value;
-                if(val && val.includes('v=')) {
+                if(val.includes('v=')) {
                     const id = val.split('v=')[1].split('&')[0];
                     document.getElementById('v' + i).src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&origin=https://${domain}`;
                 }
@@ -95,12 +95,14 @@
         function mudarChat(num) {
             const videoSrc = document.getElementById('v' + num).src;
             if(videoSrc.includes('embed/')) {
-                // Extrai o ID do vídeo para sintonizar o chat
+                // Tenta extrair o ID para carregar o chat
                 let id = videoSrc.split('embed/')[1].split('?')[0];
                 if(id === "live_stream") {
-                    id = "default"; // Fallback para live stream direta
+                    // Fallback se estiver usando o modo de redirecionamento direto
+                    document.getElementById('chat-frame').src = `https://www.youtube.com/live_chat?v=default&embed_domain=${domain}`;
+                } else {
+                    document.getElementById('chat-frame').src = `https://www.youtube.com/live_chat?v=${id}&embed_domain=${domain}`;
                 }
-                document.getElementById('chat-frame').src = `https://www.youtube.com/live_chat?v=${id}&embed_domain=${domain}`;
             }
         }
 
@@ -109,14 +111,15 @@
         function setLayout(l) {
             const g = document.getElementById('grid');
             g.className = l;
-            document.querySelectorAll('.box').forEach((b, i) => {
-                b.classList.remove('hide');
-                if(l === 'g4' && i >= 4) b.classList.add('hide');
-                if(l === 'l3' && i >= 3) b.classList.add('hide');
+            document.querySelectorAll('.box').forEach((box, i) => {
+                box.classList.remove('hide');
+                if(l === 'g4' && i >= 4) box.classList.add('hide');
+                if(l === 'l3' && i >= 3) box.classList.add('hide');
             });
         }
-        
-        window.onload = syncAuto;
+
+        // Tenta carregar automaticamente ao entrar
+        window.onload = forceSync;
     </script>
 </body>
 </html>
