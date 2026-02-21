@@ -2,134 +2,79 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>MultiWatch - Expedição Helios (GitHub Edition)</title>
+    <title>TESTE HELIOS - MULTIVIEW</title>
     <style>
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #nav { background: #111; padding: 10px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
+        #grid { display: grid; flex: 1; gap: 2px; background: #222; }
         
-        #toolbar { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1000; pointer-events: none; height: 50px; }
-        #menu-to-hide { background: rgba(17, 17, 17, 0.95); padding: 5px 15px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #333; pointer-events: auto; transition: transform 0.3s ease; }
-        .menu-hidden #menu-to-hide { transform: translateY(-100%); }
+        /* Classes de Layout baseadas na Expedição */
+        .g6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+        .g4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+        .l3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr 1fr; }
+        .l3 .v-box:nth-child(3) { grid-column: span 2; }
+
+        .v-box { background: #000; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .tag { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.8); padding: 2px 5px; font-size: 10px; border-radius: 3px; }
         
-        button { background: #222; color: #eee; border: 1px solid #444; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        button:hover { background: #333; }
-        .btn-live { background: #ff0000; color: white; border: none; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-        #main-container { display: flex; flex: 1; width: 100%; overflow: hidden; margin-top: 50px; transition: margin-top 0.3s ease; }
-        .menu-hidden #main-container { margin-top: 0; }
-        
-        #content-area { display: grid; flex: 1; gap: 2px; background: #111; transition: all 0.3s ease; }
-
-        /* Classes de Layout Dinâmico */
-        .layout-6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
-        .layout-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
-        .layout-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr 1fr; }
-        .layout-3 .video-box:nth-child(3) { grid-column: span 2; }
-
-        .video-box { background: #000; position: relative; width: 100%; height: 100%; overflow: hidden; }
-        iframe { width: 100%; height: 100%; border: none; background: #000; }
-
-        .name-tag { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; font-size: 10px; border-radius: 3px; z-index: 5; border: 1px solid #444; pointer-events: none; }
-        .yt-link { position: absolute; bottom: 5px; right: 5px; background: rgba(255,0,0,0.6); color: white; padding: 2px 5px; font-size: 9px; text-decoration: none; border-radius: 3px; z-index: 10; font-weight: bold; }
-        
-        #menu-trigger { position: fixed; top: 0; left: 0; width: 100%; height: 15px; z-index: 1001; }
-        .hide { display: none !important; }
+        button { background: #ff0000; color: #fff; border: none; padding: 6px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-layout { background: #333; }
     </style>
 </head>
-<body class="menu-hidden">
+<body>
 
-    <div id="menu-trigger" onmouseenter="showMenu()"></div>
-
-    <div id="toolbar">
-        <div id="menu-to-hide" onmouseleave="startHideTimer()" onmouseenter="clearHideTimer()">
-            <button class="btn-live" onclick="atualizarTudo()">SINCRO AO VIVO</button>
-            <div style="border-left: 1px solid #333; padding-left: 10px; display: flex; gap: 5px;">
-                <button onclick="mudarLayout('layout-6')">G6</button>
-                <button onclick="mudarLayout('layout-4')">G4</button>
-                <button onclick="mudarLayout('layout-3')">L3</button>
-            </div>
-            <button onclick="toggleFocus()" style="margin-left: auto;">FOCUS (ESC)</button>
-        </div>
+    <div id="nav">
+        <button onclick="sync()">SINCRO LIVES</button>
+        <button class="btn-layout" onclick="change('g6')">GRADE 6</button>
+        <button class="btn-layout" onclick="change('g4')">GRADE 4</button>
+        <button class="btn-layout" onclick="change('l3')">LAYOUT 3</button>
     </div>
 
-    <div id="main-container">
-        <div id="content-area" class="layout-6">
-            <div id="b1" class="video-box"><div class="name-tag">RICHARD</div><iframe id="v1" allowfullscreen></iframe><a id="l1" class="yt-link" target="_blank">YT</a></div>
-            <div id="b2" class="video-box"><div class="name-tag">RATO B.</div><iframe id="v2" allowfullscreen></iframe><a id="l2" class="yt-link" target="_blank">YT</a></div>
-            <div id="b3" class="video-box"><div class="name-tag">CARIANI</div><iframe id="v3" allowfullscreen></iframe><a id="l3" class="yt-link" target="_blank">YT</a></div>
-            <div id="b4" class="video-box"><div class="name-tag">ACF</div><iframe id="v4" allowfullscreen></iframe><a id="l4" class="yt-link" target="_blank">YT</a></div>
-            <div id="b5" class="video-box"><div class="name-tag">TONIMEK</div><iframe id="v5" allowfullscreen></iframe><a id="l5" class="yt-link" target="_blank">YT</a></div>
-            <div id="b6" class="video-box"><div class="name-tag">GORDOX</div><iframe id="v6" allowfullscreen></iframe><a id="l6" class="yt-link" target="_blank">YT</a></div>
-        </div>
+    <div id="grid" class="g6">
+        <div class="v-box"><div class="tag">RICHARD</div><iframe id="v1"></iframe></div>
+        <div class="v-box"><div class="tag">RATO B.</div><iframe id="v2"></iframe></div>
+        <div class="v-box"><div class="tag">CARIANI</div><iframe id="v3"></iframe></div>
+        <div class="v-box"><div class="tag">ACF</div><iframe id="v4"></iframe></div>
+        <div class="v-box"><div class="tag">TONIMEK</div><iframe id="v5"></iframe></div>
+        <div class="v-box"><div class="tag">GORDOX</div><iframe id="v6"></iframe></div>
     </div>
 
     <script>
         const API_KEY = "AIzaSyCQq0x3oD1kOWt2ZNgIhD-Y75nxIK3Z2gI";
-        const CANAIS = [
-            { id: "UC-lHJZR3Gqxm24_Vd_AJ5Yw", name: "Richard" },
-            { id: "UC0uYV778E2GTo6W8U6u220w", name: "Rato B." },
-            { id: "UCPY9OndS0GqL9YofV_8B9_w", name: "Cariani" },
-            { id: "UCxI-mD7-S1vshLh9LpX8Oog", name: "ACF" },
-            { id: "UCX9H70qU1R3eK3c9NnOasTg", name: "Tonimek" },
-            { id: "UC57f9p_v0m3Gq80M09Hl_Bg", name: "Gordox" }
+        const IDS = [
+            "UC-lHJZR3Gqxm24_Vd_AJ5Yw", "UC0uYV778E2GTo6W8U6u220w", "UCPY9OndS0GqL9YofV_8B9_w",
+            "UCxI-mD7-S1vshLh9LpX8Oog", "UCX9H70qU1R3eK3c9NnOasTg", "UC57f9p_v0m3Gq80M09Hl_Bg"
         ];
 
-        const domain = "zikapr26.github.io";
-
-        async function atualizarTudo() {
-            const btn = document.querySelector('.btn-live');
-            btn.innerText = "SINCRO...";
-            
-            for (let i = 0; i < CANAIS.length; i++) {
-                const iframe = document.getElementById('v' + (i + 1));
-                const link = document.getElementById('l' + (i + 1));
+        async function sync() {
+            for(let i=0; i<IDS.length; i++) {
+                const f = document.getElementById('v' + (i+1));
                 try {
-                    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CANAIS[i].id}&type=video&eventType=live&key=${API_KEY}`);
-                    const data = await r.json();
-                    
-                    if (data.items && data.items.length > 0) {
-                        const videoId = data.items[0].id.videoId;
-                        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&origin=https://${domain}`;
-                        link.href = `https://www.youtube.com/watch?v=${videoId}`;
+                    // Busca ID da live
+                    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${IDS[i]}&type=video&eventType=live&key=${API_KEY}`);
+                    const d = await r.json();
+                    if(d.items && d.items.length > 0) {
+                        f.src = `https://www.youtube.com/embed/${d.items[0].id.videoId}?autoplay=1&mute=1`;
                     } else {
-                        // Backup link direto
-                        iframe.src = `https://www.youtube.com/embed/live_stream?channel=${CANAIS[i].id}&autoplay=1&mute=1&origin=https://${domain}`;
-                        link.href = `https://www.youtube.com/channel/${CANAIS[i].id}/live`;
+                        // Backup
+                        f.src = `https://www.youtube.com/embed/live_stream?channel=${IDS[i]}&autoplay=1&mute=1`;
                     }
-                } catch (e) { console.error(e); }
+                } catch(e) { console.error("Erro"); }
             }
-            btn.innerText = "SINCRO AO VIVO";
         }
 
-        function mudarLayout(classe) {
-            const area = document.getElementById('content-area');
-            const boxes = document.querySelectorAll('.video-box');
-            area.classList.remove('layout-6', 'layout-4', 'layout-3');
-            area.classList.add(classe);
-
-            boxes.forEach((box, index) => {
-                box.classList.remove('hide');
-                if(classe === 'layout-4' && index >= 4) box.classList.add('hide');
-                if(classe === 'layout-3' && index >= 3) box.classList.add('hide');
+        function change(l) {
+            const g = document.getElementById('grid');
+            const b = document.querySelectorAll('.v-box');
+            g.className = l;
+            b.forEach((box, i) => {
+                box.style.display = "block";
+                if(l === 'g4' && i >= 4) box.style.display = "none";
+                if(l === 'l3' && i >= 3) box.style.display = "none";
             });
         }
-
-        function showMenu() { document.body.classList.remove('menu-hidden'); }
-        function hideMenu() { document.body.classList.add('menu-hidden'); }
-        function startHideTimer() { hideTimer = setTimeout(hideMenu, 3000); }
-        function clearHideTimer() { if (typeof hideTimer !== 'undefined') clearTimeout(hideTimer); }
-        
-        function toggleFocus() {
-            document.body.classList.toggle('focus-mode');
-            if (document.body.classList.contains('focus-mode')) hideMenu();
-            else showMenu();
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") toggleFocus();
-        });
-
-        window.onload = atualizarTudo;
+        window.onload = sync;
     </script>
 </body>
 </html>
